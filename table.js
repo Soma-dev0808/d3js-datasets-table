@@ -1,17 +1,23 @@
-let body, table, thead, tbody, columns;
+let main, tableContainer, table, thead, tbody, columns;
+const filterObj = {
+  selectedValue: "",
+};
+const options = ["Active", "Inactive"]; // options for status filter
+
 /**
  * Generate table with data
  * @param {Object[]} data - Data to show on table.
  */
-const generateTable = (data) => {
+const initTable = (data) => {
   if (!data) return;
-  body = d3.select("body");
+  main = d3.select("main");
 
   // add select tag
   addSelect();
 
   // append table
-  table = body.append("table");
+  tableContainer = main.append("div").attr("class", "table-container");
+  table = tableContainer.append("table").attr("class", "user-table");
   thead = table.append("thead");
   tbody = table.append("tbody");
   columns = Object.keys(data[0]);
@@ -32,13 +38,35 @@ const generateTable = (data) => {
     })
     .on("click", (d) => {
       const thTxt = d.target.innerText;
+      let newData = [];
+      d.target.classList = [];
+
+      // Sorting
       if (sortAscendingObj[thTxt]) {
-        rows.sort((a, b) => d3.ascending(b[thTxt], a[thTxt]));
+        // Sort data by ascending order
+        newData = data.sort((a, b) => sortTableData(a, b)(thTxt, true));
+
+        // Update sorting status for each th in thead
         sortAscendingObj[thTxt] = false;
+        d.target.classList.add("aes");
       } else {
-        rows.sort((a, b) => d3.descending(b[thTxt], a[thTxt]));
+        // Sort data by descending order
+        newData = data.sort((a, b) => sortTableData(a, b)(thTxt, false));
+
+        // Update sorting status for each th in thead
         sortAscendingObj[thTxt] = true;
+        d.target.classList.add("des");
       }
+
+      // Filtering
+      if (options.includes(filterObj.selectedValue)) {
+        newData = newData.filter(
+          (v) => v["status"] === filterObj.selectedValue
+        );
+      }
+
+      // update table
+      updateTable(newData);
     });
 
   // create a row for each object in the data
@@ -59,40 +87,35 @@ const generateTable = (data) => {
     });
 };
 
+const sortTableData = (a, b) => {
+  return (key, isAsc) => {
+    _a = isAsc ? a : b;
+    _b = isAsc ? b : a;
+
+    if (typeof a[key] === "number") {
+      return b[key] - a[key];
+    }
+
+    return _b[key].localeCompare(_a[key]);
+  };
+};
+
 /**
  * Add select tag
- * @param {object} body - body element.
  */
 const addSelect = () => {
-  const options = ["Active", "Inactive"];
   // add select tag
-  const select = body.append("select").on("change", (e) => {
-    const selectedValue = e.target.value;
+  const select = main.append("select").on("change", (e) => {
+    filterObj.selectedValue = e.target.value;
     let newData = tableData;
 
     // filter data if active or inactive is selected
-    if (options.includes(selectedValue)) {
-      newData = tableData.filter((td) => td.status === selectedValue);
+    if (options.includes(filterObj.selectedValue)) {
+      newData = tableData.filter((td) => td.status === filterObj.selectedValue);
     }
 
     // update table
-    const rows = tbody.selectAll("tr").data(newData);
-
-    rows.exit().remove();
-
-    rows
-      .selectAll("td")
-      .data(function (row) {
-        return columns.map(function (column) {
-          return {
-            column: column,
-            value: row[column],
-          };
-        });
-      })
-      .text(function (d) {
-        return d.value ? d.value : 0;
-      });
+    updateTable(newData);
   });
 
   // Add an initial option:
@@ -106,6 +129,31 @@ const addSelect = () => {
     .append("option")
     .text(function (d) {
       return d;
+    });
+};
+
+/**
+ * Update table with data
+ * @param {Object[]} newData - New data to show on table.
+ */
+const updateTable = (newData) => {
+  // update table
+  const rows = tbody.selectAll("tr").data(newData);
+
+  rows.exit().remove();
+
+  rows
+    .selectAll("td")
+    .data((row) => {
+      return columns.map((column) => {
+        return {
+          column: column,
+          value: row[column],
+        };
+      });
+    })
+    .text((d) => {
+      return d.value;
     });
 };
 
@@ -182,4 +230,4 @@ const getRandomUserName = () => {
 const tableData = getDummyData(500);
 
 // Execute
-generateTable(tableData);
+initTable(tableData);
