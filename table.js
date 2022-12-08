@@ -1,6 +1,8 @@
 let main, tableContainer, table, thead, tbody, columns;
 const filterObj = {
-  selectedValue: "",
+  activeStatusValue: "",
+  searchUsernameValue: "",
+  searchPhoneNumberValue: "",
 };
 const options = ["Active", "Inactive"]; // options for status filter
 
@@ -13,7 +15,13 @@ const initTable = (data) => {
   main = d3.select("main");
 
   // add select tag
-  addSelect();
+  addFilterSelect("activeStatusValue");
+
+  // add search input for username
+  addSearchInput("searchUsernameValue");
+
+  // add search input for a phone number
+  addSearchInput("searchPhoneNumberValue");
 
   // append table
   tableContainer = main.append("div").attr("class", "table-container");
@@ -42,6 +50,9 @@ const initTable = (data) => {
       d.target.classList = [];
 
       // Sorting
+      // Remove current sorting emoji
+      document.querySelector(".aes")?.classList.remove("aes");
+      document.querySelector(".des")?.classList.remove("des");
       if (sortAscendingObj[thTxt]) {
         // Sort data by ascending order
         newData = data.sort((a, b) => sortTableData(a, b)(thTxt, true));
@@ -58,12 +69,12 @@ const initTable = (data) => {
         d.target.classList.add("des");
       }
 
-      // Filtering
-      if (options.includes(filterObj.selectedValue)) {
-        newData = newData.filter(
-          (v) => v["status"] === filterObj.selectedValue
-        );
-      }
+      // Reset other thead th's sorting status
+      Object.keys(sortAscendingObj).forEach((key) => {
+        if (key !== thTxt) sortAscendingObj[key] = true;
+      });
+
+      newData = execFilter(newData);
 
       // update table
       updateTable(newData);
@@ -87,13 +98,18 @@ const initTable = (data) => {
     });
 };
 
+/**
+ * Add select tag
+ * @param {Object} a - data object to compare
+ * @param {Object} b - data object to compare
+ */
 const sortTableData = (a, b) => {
   return (key, isAsc) => {
     _a = isAsc ? a : b;
     _b = isAsc ? b : a;
 
-    if (typeof a[key] === "number") {
-      return b[key] - a[key];
+    if (typeof _a[key] === "number") {
+      return _b[key] - _a[key];
     }
 
     return _b[key].localeCompare(_a[key]);
@@ -101,22 +117,21 @@ const sortTableData = (a, b) => {
 };
 
 /**
- * Add select tag
+ * Add filter select tag
+ * @param {string} objKey - objKey which contains filter status
  */
-const addSelect = () => {
+const addFilterSelect = (objKey) => {
   // add select tag
-  const select = main.append("select").on("change", (e) => {
-    filterObj.selectedValue = e.target.value;
-    let newData = tableData;
+  const select = main
+    .append("select")
+    .attr("class", "filter-select")
+    .on("change", (e) => {
+      filterObj[objKey] = e.target.value;
+      let newData = execFilter([...tableData]);
 
-    // filter data if active or inactive is selected
-    if (options.includes(filterObj.selectedValue)) {
-      newData = tableData.filter((td) => td.status === filterObj.selectedValue);
-    }
-
-    // update table
-    updateTable(newData);
-  });
+      // update table
+      updateTable(newData);
+    });
 
   // Add an initial option:
   select.append("option").html("Filter by status:");
@@ -133,25 +148,79 @@ const addSelect = () => {
 };
 
 /**
+ * Add filter input tag
+ * @param {string} objKey - objKey which contains filter status
+ */
+const addSearchInput = (objKey) => {
+  // add input tag
+  main
+    .append("input")
+    .attr("type", "text")
+    .attr("class", "filter-input")
+    .on("keyup", (e) => {
+      filterObj[objKey] = e.target.value;
+      let newData = execFilter([...tableData]);
+
+      // update table
+      updateTable(newData);
+    });
+};
+
+/**
+ * Update table with data
+ * @param {Object[]} data - New data to show on table.
+ * @return {Object[]} - Filtered data.
+ */
+const execFilter = (data) => {
+  // filtering data if active or inactive is selected
+  if (options.includes(filterObj.activeStatusValue)) {
+    data = data.filter((td) => td["status"] === filterObj.activeStatusValue);
+  }
+
+  // filtering data for username
+  if (filterObj.searchUsernameValue) {
+    data = data.filter(
+      (td) =>
+        td["username"]
+          .toUpperCase()
+          .indexOf(filterObj.searchUsernameValue.toUpperCase()) !== -1
+    );
+  }
+
+  // filtering data for a phone number
+  if (filterObj.searchPhoneNumberValue) {
+    data = data.filter(
+      (td) =>
+        td["phoneNumber"]
+          .toUpperCase()
+          .indexOf(filterObj.searchPhoneNumberValue.toUpperCase()) !== -1
+    );
+  }
+
+  return data;
+};
+
+/**
  * Update table with data
  * @param {Object[]} newData - New data to show on table.
  */
 const updateTable = (newData) => {
-  // update table
-  const rows = tbody.selectAll("tr").data(newData);
+  // Reset table
+  tbody.selectAll("tr").remove();
 
-  rows.exit().remove();
+  // create a row for each object in the data
+  const rows = tbody.selectAll("tr").data(newData).enter().append("tr");
 
+  // create a cell in each row for each column
   rows
     .selectAll("td")
     .data((row) => {
       return columns.map((column) => {
-        return {
-          column: column,
-          value: row[column],
-        };
+        return { column: column, value: row[column] };
       });
     })
+    .enter()
+    .append("td")
     .text((d) => {
       return d.value;
     });
@@ -160,6 +229,7 @@ const updateTable = (newData) => {
 /**
  * Get dummy data.
  * @param {number} numberOfData - Number of data to return.
+ * @return {object[]}
  */
 const getDummyData = (numberOfData) => {
   return [...new Array(numberOfData)].map((_, idx) => {
@@ -179,6 +249,7 @@ const getDummyData = (numberOfData) => {
  * Get random date.
  * @param {Date} start - Date from
  * @param {Date} end - Date end
+ * @return {string}
  */
 const getRandomDate = (start, end) => {
   const radomDate = new Date(
@@ -220,11 +291,12 @@ const b = [
 ];
 /**
  * Get random username.
+ * @return {string}
  */
 const getRandomUserName = () => {
   const rA = Math.floor(Math.random() * a.length);
   const rB = Math.floor(Math.random() * b.length);
-  return a[rA] + b[rB];
+  return a[rA] + " " + b[rB];
 };
 
 const tableData = getDummyData(500);
