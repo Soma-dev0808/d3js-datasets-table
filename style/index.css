@@ -1,3 +1,11 @@
+:root {
+    --primaryClr: #009879;
+    --whiteClr: #ffffff;
+    --evnClmClr: #f3f3f3;
+    --tblBrdrClr: #22222217;
+    --tblTrBrdrClr: #dddddd;
+}
+
 body {
     margin: 0;
     width: 100%;
@@ -14,3 +22,17 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+.content-header {
+    font-size: clamp(26px, 5vw, 30px);
+}
+
+/* Medium devices */
+@media screen and (max-width: 767.98px) {
+    .content {
+        width: 90%;
+    }
+}
+
+/* Small devices */
+@media screen and (max-width: 575.98px) {}
