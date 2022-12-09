@@ -96,6 +96,7 @@ const initTable = (data) => {
         if (key !== thTxt) sortAscendingObj[key] = true;
       });
 
+      // get filtered data
       newData = execFilter(newData);
 
       // update table
@@ -406,7 +407,7 @@ const getRandomUserName = () => {
 };
 
 /**
- * Get column name.
+ * Get or restore column name.
  * @param {string} plainStr - string before modification
  * @param {boolean} shouldRestore - if should restore original string
  * @return {string}
@@ -419,6 +420,7 @@ const getColumnName = (plainStr, shouldRestore = false) => {
   return plainStr.split("_").join(" ").toUpperCase();
 };
 
+// get dummy table data
 const tableData = getDummyData(500);
 
 // Execute
