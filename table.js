@@ -1,4 +1,5 @@
 let main, form, tableContainer, table, thead, tbody, columns;
+// save filtering data
 const filterObj = {
   activeStatusValue: "",
   searchIdValue: "",
@@ -7,6 +8,7 @@ const filterObj = {
   searchUsernameValue: "",
   searchPhoneNumberValue: "",
 };
+// filter elements information
 const filterLabelObj = {
   activeStatusValue: { text: "Status", type: "select" },
   searchDateFromValue: { text: "Date from", type: "date" },
@@ -141,7 +143,7 @@ const sortTableData = (a, b) => {
 
 /**
  * Add filter select tag
- * @param {string} objKey - objKey which contains filter status
+ * @param {string} objKey - objKey which contains a filter element information
  */
 const addFilterSelect = (objKey) => {
   const formDiv = form.append("div");
@@ -158,10 +160,9 @@ const addFilterSelect = (objKey) => {
     .attr("class", "filter-select")
     .on("change", (e) => {
       filterObj[objKey] = e.target.value;
-      let newData = execFilter([...tableData]);
 
       // update table
-      updateTable(newData);
+      updateTable(execFilter([...tableData]));
     });
 
   // Add an initial option:
@@ -180,7 +181,7 @@ const addFilterSelect = (objKey) => {
 
 /**
  * Add filter date input tag
- * @param {string} objKey - objKey which contains filter status
+ * @param {string} objKey - objKey which contains a filter element information
  */
 const addFilterDate = (objKey) => {
   const filterLabelData = filterLabelObj[objKey];
@@ -199,10 +200,9 @@ const addFilterDate = (objKey) => {
     .attr("type", filterLabelData.type)
     .on("change", (e) => {
       filterObj[objKey] = e.target.value;
-      let newData = execFilter([...tableData]);
 
       // update table
-      updateTable(newData);
+      updateTable(execFilter([...tableData]));
     });
 
   // Add an initial option:
@@ -221,7 +221,7 @@ const addFilterDate = (objKey) => {
 
 /**
  * Add filter input tag
- * @param {string} objKey - objKey which contains filter status
+ * @param {string} objKey - objKey which contains a filter element information
  */
 const addSearchInput = (objKey) => {
   const filterLabelData = filterLabelObj[objKey];
@@ -240,10 +240,9 @@ const addSearchInput = (objKey) => {
     .attr("class", "filter-input")
     .on("keyup", (e) => {
       filterObj[objKey] = e.target.value;
-      let newData = execFilter([...tableData]);
 
       // update table
-      updateTable(newData);
+      updateTable(execFilter([...tableData]));
     });
 };
 
